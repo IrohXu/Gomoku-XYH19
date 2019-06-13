@@ -1,7 +1,7 @@
 LOG_MODE = 'FILE'
 
 # define a file for logging ...
-WORK_FOLDER = r"F:\OneDrive\课件\人工智能\final\pbrain-pyrandom-master\lyh"
+WORK_FOLDER = r"F:\OneDrive\课件\人工智能\final\Gomoku-XYH19"
 DEBUG_LOGFILE = WORK_FOLDER + '/mylog'
 # ...and clear it initially
 with open(DEBUG_LOGFILE,"w") as f:
