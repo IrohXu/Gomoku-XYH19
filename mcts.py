@@ -494,7 +494,7 @@ class MCTS_UCT(object):
             data[move] = (self.wins.get((1, move), 0) /
             self.plays.get((1, move), 1)) + confront_heuristic(board, move[0], move[1], 1)/(100000.0)   # 在select_one_move过程中，可以加入ADP的值，进行归一，我现在用的依旧是我的heuristic，你可以删了
         # logDebug(sorted(data.items(), key = lambda item:item[1], reverse = True))
-        move, percent_wins = sorted(data.items(), key = lambda item:item[1], reverse = True)[0] 
+        move, percent_wins = sorted(data.items(), key = lambda item:item[1], reverse = True)[0]
         return move
 
     def get_player(self, players):   # 获取出手的玩家
