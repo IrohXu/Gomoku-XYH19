@@ -621,7 +621,7 @@ def brain_turn():
                 y = int(pp.height/2)
             else:
                 play_turn = [1,2]
-                UCT = MCTS_UCT(board, play_turn, time=6, max_actions=7)
+                UCT = MCTS_UCT(board, play_turn, time=5, max_actions=7)
                 move = UCT.get_action()
                 x,y = move
             # logDebug((x,y))
