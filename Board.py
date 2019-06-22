@@ -61,9 +61,11 @@ class Board(object):
 
         for i in range(len(self.features)):
             self.features[i] += new_features[i] - old_features[i]
-
+        
+        '''
         if check_win(self, x, y, who):
             self.win = (who == 1)
+        '''
         
         self.whose_turn = 1 if who == 2 else 2
 
