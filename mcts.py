@@ -14,6 +14,7 @@ from Board import Board
 from CriticNetwork import CriticNetwork
 import pickle
 import os
+from Resource import RESOURCE_DIR
 
 sys.setrecursionlimit(100)
 
@@ -23,7 +24,7 @@ try:
     MAX_BOARD = 20
     #board = [[0 for i in range(MAX_BOARD)] for j in range(MAX_BOARD)]
     board = Board(MAX_BOARD)
-    CRITIC_NETWORK_SAVEPATH = './critic_network'
+    CRITIC_NETWORK_SAVEPATH = RESOURCE_DIR + '/critic_network'
     critic_network = CriticNetwork(params=[len(board.features)*5 + 2, 60, 1], pattern_finder=board.pattern_finder)
     if os.path.exists(CRITIC_NETWORK_SAVEPATH):
         critic_network.layers = pickle.load(open(CRITIC_NETWORK_SAVEPATH, 'rb'))
@@ -31,7 +32,7 @@ try:
     adjacent = []  # 邻近1格的空点
 except:
     logTraceBack()
-    
+
 
 ###############################################
 # Basic function
