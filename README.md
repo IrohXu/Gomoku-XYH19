@@ -1,5 +1,2 @@
 # Gomoku-XYH19
-```
-$CFLAGS="-Os -g0 -Wl,--strip-all"
-pip install numpy --compile
-```
+https://python-forum.io/Thread-pyinstaller-exe-size
