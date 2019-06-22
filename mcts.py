@@ -473,7 +473,7 @@ class MCTS_UCT(object):
         availables = Pruning_Adjacent(board, self.board_availables, 1)
         for move in availables:  # 选择胜率最高的着法
             data[move] = (self.wins.get((1, move), 0) /
-            self.plays.get((1, move), 1)) + confront_heuristic(board, move[0], move[1], 1)/1000   # 在select_one_move过程中，可以加入ADP的值，进行归一，我现在用的依旧是我的heuristic，你可以删了
+            self.plays.get((1, move), 1)) + confront_heuristic(board, move[0], move[1], 1)/10000   # 在select_one_move过程中，可以加入ADP的值，进行归一，我现在用的依旧是我的heuristic，你可以删了
         move, percent_wins = sorted(data.items(), key = lambda item:item[1], reverse = True)[0] 
         #logDebug(sorted(data.items(), key = lambda item:item[1], reverse = True))
         #logDebug(confront_heuristic(board, move[0], move[1], 1))
