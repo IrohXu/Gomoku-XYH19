@@ -6,7 +6,7 @@ import pisqpipe as pp
 import math
 from pisqpipe import DEBUG_EVAL, DEBUG
 import Debug
-Debug.DEBUG_LOGFILE = 'mctslog'
+Debug.DEBUG_LOGFILE = 'neuralheuristiclog'
 
 logDebug = Debug.logDebug
 logTraceBack = Debug.logTraceBack
@@ -339,13 +339,23 @@ def my_heuristic(board, x, y, who):
         heuristic += 10
 
     return heuristic
-
 def confront_heuristic(board, x, y, who): 
     """The function calculate the confront_heuristic after adding an adjacent point"""
     """delete each old heuristic value in 8 directions"""
+    
     beta = 1/6
     
     return beta * my_heuristic(board, x, y, who) + (1-beta) * my_heuristic(board, x, y, oppsite_who(who))/10
+    
+    '''
+    board[x][y] = who
+    heuristic = critic_network.forward(board)
+    if who == 2:
+        heuristic = 1 - heuristic
+    heuristic *= 1000
+    board[x][y] = 0
+    return heuristic
+    '''
 
 ###############################################
 # Adjacent function
@@ -473,7 +483,7 @@ class MCTS_UCT(object):
         availables = Pruning_Adjacent(board, self.board_availables, 1)
         for move in availables:  # 选择胜率最高的着法
             data[move] = (self.wins.get((1, move), 0) /
-            self.plays.get((1, move), 1)) + confront_heuristic(board, move[0], move[1], 1)/10000   # 在select_one_move过程中，可以加入ADP的值，进行归一，我现在用的依旧是我的heuristic，你可以删了
+            self.plays.get((1, move), 1)) + confront_heuristic(board, move[0], move[1], 1)/1000   # 在select_one_move过程中，可以加入ADP的值，进行归一，我现在用的依旧是我的heuristic，你可以删了
         move, percent_wins = sorted(data.items(), key = lambda item:item[1], reverse = True)[0] 
         #logDebug(sorted(data.items(), key = lambda item:item[1], reverse = True))
         #logDebug(confront_heuristic(board, move[0], move[1], 1))
@@ -576,9 +586,7 @@ def brain_init():
 def brain_restart():
     global adjacent
     adjacent = []
-    for x in range(pp.width):
-        for y in range(pp.height):
-            board[x][y] = 0
+    board.reset()
     pp.pipeOut("OK")
 
 def isFree(x, y):

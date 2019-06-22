@@ -45,6 +45,7 @@ class Board(object):
         board_copy.features = copy(self.features)
         board_copy.win = self.win
         board_copy.whose_turn = self.whose_turn
+        return board_copy
 
     def __getitem__(self, i):
         return self.board[i]
@@ -69,6 +70,9 @@ class Board(object):
             self.win = (who == 1)
         '''
 
-        self.whose_turn = 1 if who == 2 else 2
+        if who == 0:
+            self.whose_turn = 1 if self.whose_turn == 2 else 2
+        else:
+            self.whose_turn = 1 if who == 2 else 2
 
     
