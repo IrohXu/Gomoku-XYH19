@@ -18,12 +18,14 @@ class Row(object):
 class Board(object):
     def __init__(self, MAX_BOARD, pattern_finder=None):
         if pattern_finder is None:
-            self.pattern_finder = PatternFinder([
+            feature_patterns = [
                 '-oooo-', 'oo-oo', 'o-ooo', '-oooo', 
                 '--ooo-', '-o-oo-', 'xo-oo-', 'xoo-o-', 'xooo--', 'oo--o',
                 'o---o', '-oo--', '-o-o--', '-o--o-',
                 '-o----',
-                ])
+            ]
+
+            self.pattern_finder = PatternFinder(feature_patterns)
         else:
             self.pattern_finder = pattern_finder
         self.MAX_BOARD = MAX_BOARD
@@ -66,7 +68,7 @@ class Board(object):
         if check_win(self, x, y, who):
             self.win = (who == 1)
         '''
-        
+
         self.whose_turn = 1 if who == 2 else 2
 
     
