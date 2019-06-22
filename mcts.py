@@ -7,6 +7,7 @@ import math
 from pisqpipe import DEBUG_EVAL, DEBUG
 import Debug
 Debug.DEBUG_LOGFILE = 'mctslog'
+
 logDebug = Debug.logDebug
 logTraceBack = Debug.logTraceBack
 
