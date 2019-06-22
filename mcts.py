@@ -19,15 +19,19 @@ sys.setrecursionlimit(100)
 
 pp.infotext = 'name="pbrain-pyguaguagua", author="Iroh Cao", version="1.0", country="Shenzhen, China", www="https://github.com/stranskyjan/pbrain-pyrandom"'
 
-MAX_BOARD = 20
-#board = [[0 for i in range(MAX_BOARD)] for j in range(MAX_BOARD)]
-board = Board(MAX_BOARD)
-CRITIC_NETWORK_SAVEPATH = './critic_network'
-critic_network = CriticNetwork(params=[len(board.features)*5 + 2, 60, 1], pattern_finder=board.pattern_finder)
-if os.path.exists(CRITIC_NETWORK_SAVEPATH):
-    critic_network.layers = pickle.load(open(CRITIC_NETWORK_SAVEPATH, 'rb'))
-    logDebug('Using existing model at '+CRITIC_NETWORK_SAVEPATH)
-adjacent = []  # 邻近1格的空点
+try:
+    MAX_BOARD = 20
+    #board = [[0 for i in range(MAX_BOARD)] for j in range(MAX_BOARD)]
+    board = Board(MAX_BOARD)
+    CRITIC_NETWORK_SAVEPATH = './critic_network'
+    critic_network = CriticNetwork(params=[len(board.features)*5 + 2, 60, 1], pattern_finder=board.pattern_finder)
+    if os.path.exists(CRITIC_NETWORK_SAVEPATH):
+        critic_network.layers = pickle.load(open(CRITIC_NETWORK_SAVEPATH, 'rb'))
+        logDebug('Using existing model at '+CRITIC_NETWORK_SAVEPATH)
+    adjacent = []  # 邻近1格的空点
+except:
+    logTraceBack()
+    
 
 ###############################################
 # Basic function
