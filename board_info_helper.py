@@ -70,7 +70,7 @@ def check_win(board, x, y, who):
         left += 1
     while x+right+1 < MAX_BOARD and board[x+right+1][y] == who:
         right += 1
-    if right + left + 1 == 5:
+    if right + left + 1 >= 5:
         return True
     
     # col
@@ -80,7 +80,7 @@ def check_win(board, x, y, who):
         down += 1
     while y+up+1 < MAX_BOARD and board[x][y+up+1] == who:
         up += 1
-    if up + down + 1 == 5:
+    if up + down + 1 >= 5:
         return True
 
     # diag1
@@ -90,7 +90,7 @@ def check_win(board, x, y, who):
         upperLeft += 1
     while x+lowerRight+1 < MAX_BOARD and y-lowerRight-1 >= 0 and board[x+lowerRight+1][y-lowerRight-1] == who:
         lowerRight += 1
-    if lowerRight + upperLeft + 1 == 5:
+    if lowerRight + upperLeft + 1 >= 5:
         return True
 
     # diag2
@@ -100,7 +100,7 @@ def check_win(board, x, y, who):
         lowerLeft += 1
     while x+upperRight+1 < MAX_BOARD and y+upperRight+1 < MAX_BOARD and board[x+upperRight+1][y+upperRight+1] == who:
         upperRight += 1
-    if upperRight + lowerLeft + 1 == 5:
+    if upperRight + lowerLeft + 1 >= 5:
         return True
     
     return False

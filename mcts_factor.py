@@ -348,6 +348,7 @@ def confront_heuristic(board, x, y, who):
     return beta * my_heuristic(board, x, y, who) + (1-beta) * my_heuristic(board, x, y, oppsite_who(who))/10
     
     '''
+    #logDebug('Calculate heuristic at coordinate (%s, %s) for %s'% (x, y, 'ME' if who==1 else 'OPPONENT'))
     board[x][y] = who
     heuristic = critic_network.forward(board)
     if who == 2:
@@ -375,7 +376,8 @@ def Adjacent(board):
                         else:
                             tag = 1
                 if tag == 1:
-                    adjacent.append((x,y))                        
+                    adjacent.append((x,y))                      
+    #logDebug('adjacents: '+str(adjacent))  
     return adjacent
 
 def Adjacent_1(board, old_adjacent, x, y):
@@ -505,7 +507,9 @@ class MCTS_UCT(object):
         visited_states = set() # 记录当前路径上的全部着法
         winner = -1
         expand = True
+        logDebug('adjacents: '+str(adjacent))
         availables = Pruning_Adjacent(board, adjacent, player)
+        logDebug('pruned adjacents: '+str(availables))
         # Simulation
         for t in range(1, self.max_actions + 1):
             # Selection

@@ -62,7 +62,7 @@ class CriticNetwork():
         for layer in self.layers:
             layer.forward(output)
             output = layer.output_data
-        return output
+        return float(output)
 
     def calc_gradient(self, error):
         delta = -self.ALPHA*error #注意！！！

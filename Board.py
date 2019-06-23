@@ -1,6 +1,7 @@
 from PatternFinder import PatternFinder
 from board_info_helper import check_win, generate_board_value_lists
 from copy import deepcopy, copy
+import sys
 
 class Row(object):
     def __init__(self, board, row_number):
@@ -12,6 +13,11 @@ class Row(object):
     def __setitem__(self, j, value):
         self.board.update_features([self.row_number, j], value)
         self.row[j] = value
+
+    def copy(self, board):
+        row_copy = Row(board, self.row_number)
+        row_copy.row = copy(self.row)
+        return row_copy
 
         
 
@@ -41,7 +47,7 @@ class Board(object):
         board_copy = Board(self.MAX_BOARD, self.pattern_finder)
         board_copy.board = []
         for row in self.board:
-            board_copy.board.append(copy(row))
+            board_copy.board.append(row.copy(board_copy))
         board_copy.features = copy(self.features)
         board_copy.win = self.win
         board_copy.whose_turn = self.whose_turn
@@ -65,14 +71,27 @@ class Board(object):
         for i in range(len(self.features)):
             self.features[i] += new_features[i] - old_features[i]
         
-        '''
+
         if check_win(self, x, y, who):
             self.win = (who == 1)
-        '''
+
 
         if who == 0:
             self.whose_turn = 1 if self.whose_turn == 2 else 2
         else:
             self.whose_turn = 1 if who == 2 else 2
+
+    def print(self):
+        for i in range(self.MAX_BOARD):
+            for j in range(self.MAX_BOARD):
+                if self.board[i][j] == 0:
+                    sys.stdout.write('-')
+                elif self.board[i][j] == 1:
+                    sys.stdout.write('o')
+                else:
+                    sys.stdout.write('x')
+            sys.stdout.write('\n')
+        sys.stdout.write('\n')
+        sys.stdout.flush()
 
     
