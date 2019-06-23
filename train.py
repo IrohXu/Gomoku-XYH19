@@ -7,7 +7,7 @@ import pickle
 import random
 
 adp.LOG_MODE = 'FUCK'
-WORK_FOLDER = "F:/OneDrive/课件/人工智能/final/pbrain-pyrandom-master/train/"
+WORK_FOLDER = r"F:\OneDrive\课件\人工智能\final\Gomoku-XYH19/train"
 CRITIC_NETWORK_SAVEPATH = WORK_FOLDER+'/critic_network'
 
 ME = 1

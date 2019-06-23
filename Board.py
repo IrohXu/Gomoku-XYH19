@@ -24,11 +24,27 @@ class Row(object):
 class Board(object):
     def __init__(self, MAX_BOARD, pattern_finder=None):
         if pattern_finder is None:
+            '''
             feature_patterns = [
                 '-oooo-', 'oo-oo', 'o-ooo', '-oooo', 
                 '--ooo-', '-o-oo-', 'xo-oo-', 'xoo-o-', 'xooo--', 'oo--o',
                 'o---o', '-oo--', '-o-o--', '-o--o-',
                 '-o----',
+            ]
+            '''
+            feature_patterns = [
+                '-oooo-', 
+                'x-ooo-x', '--ooo--', 'x-ooo--', 
+                'xoooo-', 
+                '-oo-o-', 
+                'xoo-o-', 'xo-oo-', 
+                'xooo-o', 'xoo-oo', 'xo-ooo', 
+                'xooo--', 
+                '-o-o-o-', 'xo-o-ox', 'xo-o-o-', 
+                '--o-o--', 'x-o-o--', 'x-o-o-x', 
+                '--oo--', 'x-oo--', 
+                '--o--'
+
             ]
 
             self.pattern_finder = PatternFinder(feature_patterns)
