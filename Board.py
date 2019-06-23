@@ -43,7 +43,9 @@ class Board(object):
                 '-o-o-o-', 'xo-o-ox', 'xo-o-o-', 
                 '--o-o--', 'x-o-o--', 'x-o-o-x', 
                 '--oo--', 'x-oo--', 
-                '--o--'
+                '--o--', 
+
+                '-oooo', 'o-ooo', 'oo-oo', 
 
             ]
 

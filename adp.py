@@ -18,7 +18,7 @@ CRITIC_NETWORK_SAVEPATH = WORK_FOLDER+'/critic_network'
 class ActionNetwork():
     def __init__(self, objective=1):
         self.objective = objective
-        self.EPSILON = 0.0
+        self.EPSILON = 0.1
     def forward(self, board, actions, values):
         if random.random() < self.EPSILON: # EPSILON greedy
             zipped = list(filter(lambda zipped: abs(zipped[1] - self.objective)<1, zip(actions, values))) # 就算随机选也不要选必输的
