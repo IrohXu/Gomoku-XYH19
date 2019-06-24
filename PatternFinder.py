@@ -76,3 +76,13 @@ class PatternFinder():
                     if p.pattern is not None:
                         result[self.pattern_encoding[p.pattern]] += 1
         return result
+
+if __name__ == '__main__':
+    feature_patterns = [
+                '-oooo-', 'oo-oo', 'o-ooo', '-oooo', 
+                '--ooo-', '-o-oo-', 'xo-oo-', 'xoo-o-', 'xooo--', 'oo--o',
+                'o---o', '-oo--', '-o-o--', '-o--o-',
+                '-o----',
+            ]
+    pattern_finder = PatternFinder(feature_patterns)
+    print(pattern_finder.pattern_encoding)

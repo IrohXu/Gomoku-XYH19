@@ -10,15 +10,15 @@ import pickle
 import os
 
 MAX_BOARD = 20
-WORK_FOLDER = r"F:\OneDrive\课件\人工智能\final\pbrain-pyrandom-master\lyh\dist"
-CRITIC_NETWORK_SAVEPATH = WORK_FOLDER+'/critic_network'
+WORK_FOLDER = r"F:\OneDrive\课件\人工智能\final\Gomoku-XYH19\dist/"
+CRITIC_NETWORK_SAVEPATH = WORK_FOLDER+'/critic_network_new'
 
 
 
 class ActionNetwork():
-    def __init__(self, objective=1):
+    def __init__(self, objective=1, EPSILON=0.0):
         self.objective = objective
-        self.EPSILON = 0.1
+        self.EPSILON = EPSILON
     def forward(self, board, actions, values):
         if random.random() < self.EPSILON: # EPSILON greedy
             zipped = list(filter(lambda zipped: abs(zipped[1] - self.objective)<1, zip(actions, values))) # 就算随机选也不要选必输的
@@ -58,6 +58,7 @@ class SystemModel():
 
 class Main():
     def __init__(self, board):
+        self.TRAIN = False
         self.board = board
         self.ME = 1
         self.OPPONENT = 2
@@ -77,8 +78,9 @@ class Main():
             action, value = self.action_network.forward(self.board, actions, values)
             board_now = deepcopy(self.board)
             board_next = self.system_model.forward(action) # pp.do_mymove here
-            reward = 1.0 if check_win(board_now, action[0], action[1], who=self.ME) else 0.0
-            self.critic_network.back_propagation(board_now, board_next, reward)
+            if self.TRAIN:
+                reward = 1.0 if check_win(board_now, action[0], action[1], who=self.ME) else 0.0
+                self.critic_network.back_propagation(board_now, board_next, reward)
         except:
             logTraceBack()
             raise Exception('fuck')

@@ -48,7 +48,7 @@ class Board(object):
                 '-oooo', 'o-ooo', 'oo-oo', 
 
             ]
-
+            
             self.pattern_finder = PatternFinder(feature_patterns)
         else:
             self.pattern_finder = pattern_finder

@@ -5,8 +5,9 @@ from board_info_helper import Adjacent
 import os
 import pickle
 import random
+import Debug
 
-adp.LOG_MODE = 'FUCK'
+Debug.LOG_MODE = 'FUCK'
 WORK_FOLDER = r"F:\OneDrive\课件\人工智能\final\Gomoku-XYH19/train"
 CRITIC_NETWORK_SAVEPATH = WORK_FOLDER+'/critic_network'
 
@@ -19,8 +20,8 @@ MAX_BOARD = 20
 adp.board = Board(MAX_BOARD)
 board = adp.board
 
-action_network_me = ActionNetwork(objective=OBJECTIVE_MY)
-action_network_opponent = ActionNetwork(objective=OBJECTIVE_OPPONENTS)
+action_network_me = ActionNetwork(objective=OBJECTIVE_MY, EPSILON=0.01)
+action_network_opponent = ActionNetwork(objective=OBJECTIVE_OPPONENTS, EPSILON=0.01)
 
 critic_network = CriticNetwork(params=[len(board.features)*5 + 2, 60, 1], pattern_finder=board.pattern_finder) # 神经网络结构
 if os.path.exists(CRITIC_NETWORK_SAVEPATH):
@@ -32,7 +33,7 @@ def get_candidate_actions(who):
     values = []
     for action in actions:
         x, y = action
-        board_next = deepcopy(board)
+        board_next = board.deepcopy()
         board_next[x][y] = who
         values.append(critic_network.forward(board_next))
     return actions, values
