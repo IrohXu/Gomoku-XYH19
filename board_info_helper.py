@@ -2,6 +2,8 @@ import random
 MAX_BOARD = 20
 
 def generate_board_value_lists(board, x, y, who):
+
+    opponent = 1 if who == 2 else 2
     # row
     old_row_list = [board[x][y]]
     new_row_list = [who]
@@ -11,10 +13,14 @@ def generate_board_value_lists(board, x, y, who):
         old_row_list.insert(0, board[x-left-1][y])
         new_row_list.insert(0, board[x-left-1][y])
         left += 1 
+    old_row_list.insert(0, opponent)
+    new_row_list.insert(0, opponent)
     while x+right+1 < MAX_BOARD:
         old_row_list.append(board[x+right+1][y])
         new_row_list.append(board[x+right+1][y])
         right += 1
+    old_row_list.append(opponent)
+    new_row_list.append(opponent)
     
     # col
     old_col_list = [board[x][y]]
@@ -25,10 +31,14 @@ def generate_board_value_lists(board, x, y, who):
         old_col_list.insert(0, board[x][y-down-1])
         new_col_list.insert(0, board[x][y-down-1])
         down += 1
+    old_col_list.insert(0, opponent)
+    new_col_list.insert(0, opponent)
     while y+up+1 < MAX_BOARD:
         old_col_list.append(board[x][y+up+1])
         new_col_list.append(board[x][y+up+1])
         up += 1
+    old_col_list.append(opponent)
+    new_col_list.append(opponent)
 
 
     # diag1
@@ -40,10 +50,14 @@ def generate_board_value_lists(board, x, y, who):
         old_diag1_list.insert(0, board[x-upperLeft-1][y+upperLeft+1])
         new_diag1_list.insert(0, board[x-upperLeft-1][y+upperLeft+1])
         upperLeft += 1
+    old_diag1_list.insert(0, opponent)
+    new_diag1_list.insert(0, opponent)
     while x+lowerRight+1 < MAX_BOARD and y-lowerRight-1 >= 0:
         old_diag1_list.append(board[x+lowerRight+1][y-lowerRight-1])
         new_diag1_list.append(board[x+lowerRight+1][y-lowerRight-1])
         lowerRight += 1
+    old_diag1_list.append(opponent)
+    new_diag1_list.append(opponent)
 
 
     # diag2
@@ -55,10 +69,14 @@ def generate_board_value_lists(board, x, y, who):
         old_diag2_list.insert(0, board[x-lowerLeft-1][y-lowerLeft-1])
         new_diag2_list.insert(0, board[x-lowerLeft-1][y-lowerLeft-1])
         lowerLeft += 1
+    old_diag2_list.insert(0, opponent)
+    new_diag2_list.insert(0, opponent)
     while x+upperRight+1 < MAX_BOARD and y+upperRight+1 < MAX_BOARD:
         old_diag2_list.append(board[x+upperRight+1][y+upperRight+1])
         new_diag2_list.append(board[x+upperRight+1][y+upperRight+1])
         upperRight += 1
+    old_diag2_list.append(opponent)
+    new_diag2_list.append(opponent)
 
     return [old_row_list, old_col_list, old_diag1_list, old_diag2_list], [new_row_list, new_col_list, new_diag1_list, new_diag2_list]
 

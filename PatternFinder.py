@@ -63,6 +63,9 @@ class PatternFinder():
     def get_encoding(self, pattern):
         return self.pattern_encoding[pattern]
 
+    def get_pattern_count(self, pattern, count_list):
+        return count_list[self.get_encoding(pattern)]
+
     def find(self, board_value_lists):
         result = [0 for i in range(len(self.pattern_encoding))]
         for board_value_list in board_value_lists:

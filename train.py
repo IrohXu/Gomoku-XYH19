@@ -20,10 +20,10 @@ MAX_BOARD = 20
 adp.board = Board(MAX_BOARD)
 board = adp.board
 
-action_network_me = ActionNetwork(objective=OBJECTIVE_MY, EPSILON=0.01)
-action_network_opponent = ActionNetwork(objective=OBJECTIVE_OPPONENTS, EPSILON=0.01)
+action_network_me = ActionNetwork(objective=OBJECTIVE_MY, EPSILON=0.1)
+action_network_opponent = ActionNetwork(objective=OBJECTIVE_OPPONENTS, EPSILON=0.1)
 
-critic_network = CriticNetwork(params=[len(board.features)*5 + 2, 60, 1], pattern_finder=board.pattern_finder) # 神经网络结构
+critic_network = CriticNetwork(params=[len(board.features)*5 + 2, 100, 1], pattern_finder=board.pattern_finder) # 神经网络结构
 if os.path.exists(CRITIC_NETWORK_SAVEPATH):
     critic_network.layers = pickle.load(open(CRITIC_NETWORK_SAVEPATH, 'rb'))
     adp.logDebug('Using existing model at '+CRITIC_NETWORK_SAVEPATH)
