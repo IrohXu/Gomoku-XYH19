@@ -48,7 +48,7 @@ class Node():
 
     def uct_value(self):
         '''UCT价值公式'''
-        return self.Q/self.N + 0.1*math.sqrt(2*math.log(self.parent.N)/self.N) # 对自己的simulation有信心的话就把探索系数设小一点
+        return self.Q/self.N + 0.2*math.sqrt(2*math.log(self.parent.N)/self.N) # 对自己的simulation有信心的话就把探索系数设小一点
     
     def win_rate(self):
         return self.Q/self.N
