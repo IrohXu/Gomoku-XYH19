@@ -48,7 +48,7 @@ class Node():
 
     def uct_value(self):
         '''UCT价值公式'''
-        return self.Q/self.N + 1.414*math.sqrt(2*math.log(self.parent.N)/self.N)
+        return self.Q/self.N + 0.1*math.sqrt(2*math.log(self.parent.N)/self.N) # 对自己的simulation有信心的话就把探索系数设小一点
     
     def win_rate(self):
         return self.Q/self.N
@@ -92,7 +92,8 @@ class UCT(object):
         self.initial_board = board
         self.root = Node(action=(None, None), parent=None, board=board)
         self.eval_function = eval_function
-        self.MAX_DEPTH = 6
+        self.MAX_DEPTH = 4
+        self.DECAY = 0.9
 
     def reset(self):
         self.root = Node(action=(None, None), parent=None, board=board)
@@ -114,33 +115,53 @@ class UCT(object):
                 return node
 
     def simulate(self, v):
-        for _ in range(self.MAX_DEPTH):
+        
+        test = False
+        '''
+        if v.action == ((7, 9), 1):
+            test = True
+        '''
+        for depth in range(self.MAX_DEPTH):
             if v.is_terminal():
-                return 1.0 if v.board.win else 0.0
+                return (1.0*(self.DECAY**depth) if v.board.win else 0.0)
 
             action_selected = None
-            '''
+            
+            action_value_list = []
             for action in v.get_successors():
                 where = action[0]
                 board_copy = v.board.deepcopy()
-                board_copy[where[0]][where[1]] = 1
+                board_copy[where[0]][where[1]] = v.board.whose_turn # 之前这边写错了
                 value = self.eval_function(board_copy)
-                if v.board.whose_turn==1 and value>0.98:
-                    action_selected = action
-                    break
-                elif v.board.whose_turn==2 and 1-value>0.98:
-                    action_selected = action
-            '''
-
+                action_value_list.append((action, value))
+            if v.board.whose_turn == 1:
+                action_selected, _ = max(action_value_list, key=lambda tup:tup[1])
+            else:
+                action_selected, _ = min(action_value_list, key=lambda tup:tup[1])
+                
+                if test:
+                    print('action_selected: %s, value: %s'%(str(action_selected), _))
+                    '''
+                    for _action, _value in action_value_list:
+                        if _action == ((14, 14), 2):
+                            print('action_another: %s, value: %s'%(str(((14, 14), 2)), _value))
+                    '''
+                
             if action_selected is None:
                 action_selected = random.choice( v.get_successors() )
             v = Node(action_selected, v)
-        return self.eval_function(v.board)
+        
+        if test:
+            v.board.print()
+            print(self.eval_function(v.board))
+        
+
+        return self.eval_function(v.board)*(self.DECAY**depth)
 
     def back_propagate(self, v, reward):
         while v is not None:
             v.N += 1
-            v.Q += reward if v.who() == 1 else -reward
+            v.Q += reward if v.who() == 1 else 1-reward
             v = v.parent
 
     def uct_search(self):
@@ -148,7 +169,7 @@ class UCT(object):
         start_time = time.time()
         while time.time() - start_time < 5:
             v = self.select()
-            v = self.expand(v)
+            #v = self.expand(v) #智障
             reward = self.simulate(v)
             self.back_propagate(v, reward)
         best_successor = self.root.best_successor_to_take()
@@ -175,20 +196,22 @@ class UCT(object):
 
 def test():
 
-    board[0][0] = 1
-    board[10][11] = 2
-    board[9][11] = 1
-    board[10][12] = 2
-    board[9][12] = 1
+    board.load('history4.txt', whose_turn=2)
+
+    #board[7][9] = 1
+    #board[11][12] = 2
 
     board.print()
     uct = UCT(board, critic_network.forward)
 
-    uct.forward( ((10, 13), 2) )
-    uct.root.board.print()
-
     action = uct.uct_search()
     print(uct.root.N)
+    print(uct.root.children_expanded[action].Q)
+    print(uct.root.children_expanded[action].N)
+    
+    print(uct.root.children_expanded[((9, 10), 1)].Q)
+    print(uct.root.children_expanded[((9, 10), 1)].N)
+    
     uct.forward(action)
     uct.root.board.print()
     '''
@@ -207,15 +230,18 @@ if __name__ == '__main__':
         MAX_BOARD = 20
         board = Board(MAX_BOARD)
 
-        CRITIC_NETWORK_SAVEPATH = RESOURCE_DIR + '/critic_network'
+        CRITIC_NETWORK_SAVEPATH = RESOURCE_DIR + '/critic_network_new'
         critic_network = CriticNetwork(params=[len(board.features)*5 + 2, 60, 1], pattern_finder=board.pattern_finder)
         if os.path.exists(CRITIC_NETWORK_SAVEPATH):
             critic_network.layers = pickle.load(open(CRITIC_NETWORK_SAVEPATH, 'rb'))
             logDebug('Using existing model at '+CRITIC_NETWORK_SAVEPATH)
+        else:
+            logDebug(CRITIC_NETWORK_SAVEPATH)
+            raise Exception()
         
         uct = UCT(board, critic_network.forward)
 
-        test()
+        #test()
 
         def brain_init():
             if pp.width < 5 or pp.height < 5:
@@ -264,7 +290,10 @@ if __name__ == '__main__':
             try:
                 if pp.terminateAI:
                     return
-                action = uct.uct_search()
+                if board.whose_turn == None:
+                    action = ((10, 10), 1)
+                else:
+                    action = uct.uct_search()
                 where = action[0]
                 pp.do_mymove(where[0], where[1])
                 #uct.forward(action)
@@ -307,3 +336,4 @@ if __name__ == '__main__':
         pp.main()
     except:
         logTraceBack()
+        raise Exception()

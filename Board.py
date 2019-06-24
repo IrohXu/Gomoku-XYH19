@@ -60,6 +60,7 @@ class Board(object):
         self.features = [0 for i in range(len(self.pattern_finder.pattern_encoding))]
         self.win = None
         self.whose_turn = None
+        self.num_steps = 0
     
     def deepcopy(self):
         board_copy = Board(self.MAX_BOARD, self.pattern_finder)
@@ -69,6 +70,7 @@ class Board(object):
         board_copy.features = copy(self.features)
         board_copy.win = self.win
         board_copy.whose_turn = self.whose_turn
+        board_copy.num_steps = self.num_steps
         return board_copy
 
     def __getitem__(self, i):
@@ -90,14 +92,17 @@ class Board(object):
             self.features[i] += new_features[i] - old_features[i]
         
 
-        if check_win(self, x, y, who):
+        if self.win is None and check_win(self, x, y, who):
             self.win = (who == 1)
 
 
         if who == 0:
             self.whose_turn = 1 if self.whose_turn == 2 else 2
+            self.num_steps -= 1
         else:
             self.whose_turn = 1 if who == 2 else 2
+            self.num_steps += 1
+        pass
 
     def print(self):
         for i in range(self.MAX_BOARD):
@@ -112,4 +117,18 @@ class Board(object):
         sys.stdout.write('\n')
         sys.stdout.flush()
 
-    
+    def load(self, filename, whose_turn):
+        f = open(filename, 'r')
+        for line in f.readlines():
+            start = line.index('[')
+            end = line.index(']')+1
+            where = eval(line[start:end])
+            self[where[0]][where[1]] = whose_turn
+            whose_turn = 1 if whose_turn==2 else 2
+
+
+if __name__ == '__main__':
+    board = Board(20)
+    board_copy = board.deepcopy()
+    board_copy[0][0] = 1
+    pass
