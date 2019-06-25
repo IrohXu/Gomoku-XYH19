@@ -7,10 +7,10 @@ class Node():
 class PatternFinder():
     def __init__(self, patterns):
         self.patterns = patterns
-        self.append_switch_side_patterns(patterns)
-        self.pattern_tuples = self.append_reverse_patterns(patterns)
+        self._append_switch_side_patterns(patterns)
+        self.pattern_tuples = self._append_reverse_patterns(patterns)
         logDebug('Finding Patterns: '+ str(self.pattern_tuples))
-        self.pattern_encoding = self.generate_pattern_encoding(self.pattern_tuples)
+        self.pattern_encoding = self._generate_pattern_encoding(self.pattern_tuples)
         logDebug('Pattern encoding: '+ str(self.pattern_encoding))
         self.symbol2boardvalue = {'-': 0, 'o': 1, 'x':2}
 

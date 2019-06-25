@@ -16,10 +16,25 @@ from CriticNetwork import CriticNetwork
 import pickle
 import os
 from Resource import RESOURCE_DIR
-from board_info_helper import Adjacent
+from board_info_helper import *
+
+MAX_BOARD = 20
+board = Board(MAX_BOARD)
+
+CRITIC_NETWORK_SAVEPATH = RESOURCE_DIR + '/critic_network_nnew'
+critic_network = CriticNetwork(params=[len(board.features)*5 + 2, 60, 1], pattern_finder=board.pattern_finder)
+
+if os.path.exists(CRITIC_NETWORK_SAVEPATH):
+    critic_network.layers = pickle.load(open(CRITIC_NETWORK_SAVEPATH, 'rb'))
+    logDebug('Using existing model at '+CRITIC_NETWORK_SAVEPATH)
+else:
+    logDebug(CRITIC_NETWORK_SAVEPATH)
+    raise Exception()
 
 
-
+#EVAL_FUNCTION = critic_network.forward
+def EVAL_FUNCTION(board):
+    return heuristic(board, 1)
 
 class Node():
     def __init__(self, action, parent, board=None):
@@ -27,11 +42,13 @@ class Node():
 
         self.action = action
         self.children_expanded = {}
+        self.adjacents = None
         self.successors = None
         self.parent = parent
         self.N = 0.0
         self.Q = 0.0
-
+        self.eval_function = EVAL_FUNCTION
+        
         if parent is not None:
             new_board = parent.board.deepcopy()
             new_board[where[0]][where[1]] = who
@@ -39,6 +56,9 @@ class Node():
         else: # parent is None
             self.board = board
             self.action = (None, 1 if board.whose_turn==2 else 2)
+
+
+        
 
     def where(self):
         return self.action[0]
@@ -48,7 +68,7 @@ class Node():
 
     def uct_value(self):
         '''UCT价值公式'''
-        return self.Q/self.N + 0.2*math.sqrt(2*math.log(self.parent.N)/self.N) # 对自己的simulation有信心的话就把探索系数设小一点
+        return self.Q/self.N + 0.4*math.sqrt(2*math.log(self.parent.N)/self.N) # 对自己的simulation有信心的话就把探索系数设小一点
     
     def win_rate(self):
         return self.Q/self.N
@@ -68,19 +88,111 @@ class Node():
                                 key=lambda item: item[1].win_rate() # action=item[0], node=item[1]
                             )
         return node
+    def get_adjacents(self):
+        if self.adjacents is None:
+            if self.parent is not None:
+                parent_adjacents = self.parent.get_adjacents()
+                where = self.action[0]
+                new_adjacents = Adjacent4Point(self.board, where)
+                self.adjacents = parent_adjacents.union(new_adjacents)
+                self.adjacents.discard(where)
+            else:
+                self.adjacents = set(Adjacent(self.board))
+        
+        return self.adjacents 
 
     def get_successors(self):
         if self.successors is None:
-            adjacents = Adjacent(self.board, shuffle=False)
             assert self.board.whose_turn != self.who()
-            self.successors = list(map(lambda where:(where, self.board.whose_turn), adjacents))
+            adjacents = self.get_adjacents()
+            pruned_adjacents = list(adjacents)
+            pruned_adjacents = self.heuristic_pruning(list(adjacents))
+            #pruned_adjacents = self.eval_function_pruning(pruned_adjacents)
+            if len(pruned_adjacents) == 0:
+                self.board.win = True if self.who()==1 else False # 注意，这里对board.win进行了修改
+            self.successors = list(map(lambda where:(where, self.board.whose_turn), pruned_adjacents))
         return self.successors
     
     def is_terminal(self):
-        return self.board.win is not None
+        return len(self.get_successors()) == 0 or self.board.win is not None
+
+    def is_determined(self):
+        return len(self.get_successors()) == 1
     
     def is_expandable(self):
         return len(self.children_expanded) < len(self.get_successors())
+
+######################################################################################    
+
+    
+    
+
+
+    def heuristic_pruning(self, adjacent):
+        '''
+        返回一个元祖([], int):  (avaliable, win)
+        '''
+        pruning = []
+        #逐个adjacent遍历，进行剪枝
+        for (x,y) in adjacent:
+            temp_board = self.board.deepcopy()
+            who = temp_board.whose_turn
+            temp_board[x][y] = who
+            # 如果下完这一步直接五连
+            if temp_board.win is not None and temp_board.win == (True if who==1 else False):
+                pruning = [(x, y)]
+                return pruning
+            # 当敌方有冲四机会的时候，必须防御，没去防御的都跳过
+            if count_rest_four_op(temp_board, who) >= 1:
+                continue
+            # 当敌方没有冲四机会的时候
+            else:
+                if count_live_four_my(temp_board, who) >= 1:
+                    pruning = [(x, y)]
+                    return pruning
+                # 当有两个冲四机会的时候，必胜
+                if count_rest_four_my(temp_board, who) >= 2:
+                    pruning = [(x, y)]
+                    return pruning
+                # 有一个冲四和一个冲三
+                if count_rest_four_my(temp_board, who) >= 1 and count_live_three_my(temp_board, who) >= 1:
+                    pruning = [(x, y)]
+                    return pruning
+                # 当下一步对手没法冲四，而我方的冲四+活三>=3必胜
+                if count_rest_three_op(temp_board, who)+count_live_three_op(temp_board, who) == 0 and count_live_three_my(temp_board, who) + count_rest_four_my(temp_board, who) >= 2:
+                    pruning = [(x, y)]
+                    return pruning
+                if count_rest_four_my(temp_board, who) >= 1:
+                    pruning.append((x,y))
+                elif count_live_three_op(temp_board, who) >= 1:
+                    continue
+                else:
+                    pruning.append((x,y))
+                           
+        return pruning
+
+    def eval_function_pruning(self, adjacent):
+        LIMIT = 5
+        if len(adjacent) <= LIMIT:
+            return adjacent
+
+        where_value_list = []
+        for where in adjacent:
+            board_copy = self.board.deepcopy()
+            board_copy[where[0]][where[1]] = self.board.whose_turn # 之前这边写错了
+            value = self.eval_function(board_copy)
+            where_value_list.append((where, value))
+        if self.board.whose_turn == 1:
+            pruned = map(lambda tup:tup[0], sorted(where_value_list, key=lambda tup:tup[1], reverse=True)[0:LIMIT])
+        else:
+            pruned = map(lambda tup:tup[0], sorted(where_value_list, key=lambda tup:tup[1])[0:LIMIT])
+        pruned = list(pruned)
+
+        
+        return pruned
+            
+
+##########################################################################################
 
 class UCT(object):
     def __init__(self, board, eval_function):
@@ -93,7 +205,7 @@ class UCT(object):
         self.root = Node(action=(None, None), parent=None, board=board)
         self.eval_function = eval_function
         self.MAX_DEPTH = 4
-        self.DECAY = 0.99
+        self.DECAY = 0.9
 
     def reset(self):
         self.root = Node(action=(None, None), parent=None, board=board)
@@ -118,14 +230,18 @@ class UCT(object):
         
         test = False
         '''
-        if v.action == ((7, 9), 1):
+        if v.action == ((7, 8), 1) and v.board.num_steps==21:
             test = True
+            v.board.print()
+            print(v.get_successors())
         '''
         for depth in range(self.MAX_DEPTH):
             if v.is_terminal():
                 break
 
             action_selected = None
+            
+            #action_selected = self.eval_function_decision(v.board, v.get_successors())
             
             action_value_list = []
             for action in v.get_successors():
@@ -141,24 +257,25 @@ class UCT(object):
                 
                 if test:
                     print('action_selected: %s, value: %s'%(str(action_selected), _))
-                    '''
-                    for _action, _value in action_value_list:
-                        if _action == ((14, 14), 2):
-                            print('action_another: %s, value: %s'%(str(((14, 14), 2)), _value))
-                    '''
-                
+
+
             if action_selected is None:
                 action_selected = random.choice( v.get_successors() )
+            
             v = Node(action_selected, v)
         
 
         if v.is_terminal():
             Q = 1.0 if v.board.win else 0.0
+
         else:
             Q = self.eval_function(v.board)
 
         Q = 0.5 + (Q-0.5)*self.DECAY**depth
         
+        if test:
+            print('final Q: %s'%Q)
+            v.board.print()
 
         return Q
 
@@ -168,18 +285,42 @@ class UCT(object):
             v.Q += reward if v.who() == 1 else 1-reward
             v = v.parent
 
+    def eval_function_decision(self, board, successors):
+        action_value_list = []
+        for action in successors:
+            where = action[0]
+            board_copy = board.deepcopy()
+            board_copy[where[0]][where[1]] = board.whose_turn # 之前这边写错了
+            value = self.eval_function(board_copy)
+            action_value_list.append((action, value))
+
+        if board.whose_turn == 1:
+            action_selected, _ = max(action_value_list, key=lambda tup:tup[1])
+        else:
+            action_selected, _ = min(action_value_list, key=lambda tup:tup[1])
+        return action_selected
+
     def uct_search(self):
         '''search主函数'''
-        start_time = time.time()
-        while time.time() - start_time < 5:
-            v = self.select()
-            #v = self.expand(v) #智障
-            reward = self.simulate(v)
-            self.back_propagate(v, reward)
-        best_successor = self.root.best_successor_to_take()
-        logDebug('After %s rounds of iteration'% self.root.N)
-        logDebug('Found the best successor with win rate %s'% best_successor.win_rate())
-        return best_successor.action
+        if self.root.is_terminal():
+            successors_from_adjacents = map(lambda where:(where, self.root.board.whose_turn), list(self.root.get_adjacents()))
+            action_selected = self.eval_function_decision(self.root.board, successors_from_adjacents)
+            logDebug('Gived up')
+            return action_selected
+        elif self.root.is_determined():
+            logDebug('Took a step determined by the pruning function')
+            return self.root.get_successors()[0]
+        else:
+            start_time = time.time()
+            while time.time() - start_time < 5:
+                v = self.select()
+                #v = self.expand(v) #智障
+                reward = self.simulate(v)
+                self.back_propagate(v, reward)
+            best_successor = self.root.best_successor_to_take()
+            logDebug('After %s rounds of iteration'% self.root.N)
+            logDebug('Found the best successor with win rate %s'% best_successor.win_rate())
+            return best_successor.action
 
     def forward(self, action):
         who = action[1]
@@ -200,7 +341,7 @@ class UCT(object):
 
 def test():
 
-    board.load('history5.txt', whose_turn=2)
+    board.load('history5.txt', whose_turn=1)
 
     #board[7][9] = 1
     #board[11][12] = 2
@@ -212,9 +353,13 @@ def test():
     print(uct.root.N)
     print(uct.root.children_expanded[action].Q)
     print(uct.root.children_expanded[action].N)
+    print(action)
     
-    print(uct.root.children_expanded[((12, 8), 1)].Q)
-    print(uct.root.children_expanded[((12, 8), 1)].N)
+    #print(uct.root.children_expanded[((7, 8), 1)].Q)
+    #print(uct.root.children_expanded[((7, 8), 1)].N)
+
+    #for action in uct.root.children_expanded:
+    #    print(str(action)+': '+str(uct.root.children_expanded[action].win_rate()))
     '''
     print(uct.root.children_expanded[((10, 11), 1)].Q)
     print(uct.root.children_expanded[((10, 11), 1)].N)
@@ -234,114 +379,100 @@ def test():
     '''
 
 if __name__ == '__main__':
-    try:
-        MAX_BOARD = 20
-        board = Board(MAX_BOARD)
+    
+    
+    uct = UCT(board, critic_network.forward)
 
-        CRITIC_NETWORK_SAVEPATH = RESOURCE_DIR + '/critic_network_nnew'
-        critic_network = CriticNetwork(params=[len(board.features)*5 + 2, 60, 1], pattern_finder=board.pattern_finder)
-        if os.path.exists(CRITIC_NETWORK_SAVEPATH):
-            critic_network.layers = pickle.load(open(CRITIC_NETWORK_SAVEPATH, 'rb'))
-            logDebug('Using existing model at '+CRITIC_NETWORK_SAVEPATH)
+    #test()
+
+    def brain_init():
+        if pp.width < 5 or pp.height < 5:
+            pp.pipeOut("ERROR size of the board")
+            return
+        if pp.width > MAX_BOARD or pp.height > MAX_BOARD:
+            pp.pipeOut("ERROR Maximal board size is {}".format(MAX_BOARD))
+            return
+        pp.pipeOut("OK")
+
+    def brain_restart():
+        board.reset()
+        uct.reset()
+        pp.pipeOut("OK")
+
+    def isFree(x, y):
+        return x >= 0 and y >= 0 and x < pp.width and y < pp.height and board[x][y] == 0
+
+    def brain_my(x, y):
+        if isFree(x,y):
+            board[x][y] = 1
+            uct.forward( action=((x, y), 1) )
         else:
-            logDebug(CRITIC_NETWORK_SAVEPATH)
-            raise Exception()
-        
-        uct = UCT(board, critic_network.forward)
+            pp.pipeOut("ERROR my move [{},{}]".format(x, y))
 
-        test()
+    def brain_opponents(x, y):
+        if isFree(x,y):
+            board[x][y] = 2
+            uct.forward( action=((x, y), 2) )
+        else:
+            pp.pipeOut("ERROR opponents's move [{},{}]".format(x, y))
 
-        def brain_init():
-            if pp.width < 5 or pp.height < 5:
-                pp.pipeOut("ERROR size of the board")
+    def brain_block(x, y):
+        if isFree(x,y):
+            board[x][y] = 3
+        else:
+            pp.pipeOut("ERROR winning move [{},{}]".format(x, y))
+
+    def brain_takeback(x, y):
+        if x >= 0 and y >= 0 and x < pp.width and y < pp.height and board[x][y] != 0:
+            board[x][y] = 0
+            return 0
+        return 2
+
+    def brain_turn():
+        try:
+            if pp.terminateAI:
                 return
-            if pp.width > MAX_BOARD or pp.height > MAX_BOARD:
-                pp.pipeOut("ERROR Maximal board size is {}".format(MAX_BOARD))
-                return
-            pp.pipeOut("OK")
-
-        def brain_restart():
-            board.reset()
-            uct.reset()
-            pp.pipeOut("OK")
-
-        def isFree(x, y):
-            return x >= 0 and y >= 0 and x < pp.width and y < pp.height and board[x][y] == 0
-
-        def brain_my(x, y):
-            if isFree(x,y):
-                board[x][y] = 1
-                uct.forward( action=((x, y), 1) )
+            if board.whose_turn == None:
+                action = ((10, 10), 1)
             else:
-                pp.pipeOut("ERROR my move [{},{}]".format(x, y))
+                action = uct.uct_search()
+            where = action[0]
+            pp.do_mymove(where[0], where[1])
+            #uct.forward(action)
+        except:
+            logTraceBack()
+            raise Exception("fuck")
 
-        def brain_opponents(x, y):
-            if isFree(x,y):
-                board[x][y] = 2
-                uct.forward( action=((x, y), 2) )
-            else:
-                pp.pipeOut("ERROR opponents's move [{},{}]".format(x, y))
+    def brain_end():
+        pass
 
-        def brain_block(x, y):
-            if isFree(x,y):
-                board[x][y] = 3
-            else:
-                pp.pipeOut("ERROR winning move [{},{}]".format(x, y))
+    def brain_about():
+        pp.pipeOut(pp.infotext)
 
-        def brain_takeback(x, y):
-            if x >= 0 and y >= 0 and x < pp.width and y < pp.height and board[x][y] != 0:
-                board[x][y] = 0
-                return 0
-            return 2
-
-        def brain_turn():
-            try:
-                if pp.terminateAI:
-                    return
-                if board.whose_turn == None:
-                    action = ((10, 10), 1)
-                else:
-                    action = uct.uct_search()
-                where = action[0]
-                pp.do_mymove(where[0], where[1])
-                #uct.forward(action)
-            except:
-                logTraceBack()
-                raise Exception("fuck")
-
-        def brain_end():
-            pass
-
-        def brain_about():
-            pp.pipeOut(pp.infotext)
-
-        if DEBUG_EVAL:
-            import win32gui
-            def brain_eval(x, y):
-                # TODO check if it works as expected
-                wnd = win32gui.GetForegroundWindow()
-                dc = win32gui.GetDC(wnd)
-                rc = win32gui.GetClientRect(wnd)
-                c = str(board[x][y])
-                win32gui.ExtTextOut(dc, rc[2]-15, 3, 0, None, c, ())
-                win32gui.ReleaseDC(wnd, dc)
+    if DEBUG_EVAL:
+        import win32gui
+        def brain_eval(x, y):
+            # TODO check if it works as expected
+            wnd = win32gui.GetForegroundWindow()
+            dc = win32gui.GetDC(wnd)
+            rc = win32gui.GetClientRect(wnd)
+            c = str(board[x][y])
+            win32gui.ExtTextOut(dc, rc[2]-15, 3, 0, None, c, ())
+            win32gui.ReleaseDC(wnd, dc)
 
 
-        # "overwrites" functions in pisqpipe module
-        pp.brain_init = brain_init
-        pp.brain_restart = brain_restart
-        pp.brain_my = brain_my
-        pp.brain_opponents = brain_opponents
-        pp.brain_block = brain_block
-        pp.brain_takeback = brain_takeback
-        pp.brain_turn = brain_turn
-        pp.brain_end = brain_end
-        pp.brain_about = brain_about
-        if DEBUG_EVAL:
-            pp.brain_eval = brain_eval
+    # "overwrites" functions in pisqpipe module
+    pp.brain_init = brain_init
+    pp.brain_restart = brain_restart
+    pp.brain_my = brain_my
+    pp.brain_opponents = brain_opponents
+    pp.brain_block = brain_block
+    pp.brain_takeback = brain_takeback
+    pp.brain_turn = brain_turn
+    pp.brain_end = brain_end
+    pp.brain_about = brain_about
+    if DEBUG_EVAL:
+        pp.brain_eval = brain_eval
 
 
-        pp.main()
-    except:
-        logTraceBack()
-        raise Exception()
+    pp.main()

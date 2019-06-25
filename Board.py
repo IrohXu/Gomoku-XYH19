@@ -1,5 +1,5 @@
 from PatternFinder import PatternFinder
-from board_info_helper import check_win, generate_board_value_lists
+from board_info_helper import check_win, generate_board_value_lists, Adjacent4Point
 from copy import deepcopy, copy
 import sys
 
@@ -30,24 +30,6 @@ class Board(object):
                 '--ooo-', '-o-oo-', 'xo-oo-', 'xoo-o-', 'xooo--', 'oo--o',
                 'o---o', '-oo--', '-o-o--', '-o--o-',
                 '-o----',
-            ]
-            '''
-            '''
-            feature_patterns = [
-                '-oooo-', 
-                'x-ooo-x', '--ooo--', 'x-ooo--', 
-                'xoooo-', 
-                '-oo-o-', 
-                'xoo-o-', 'xo-oo-', 
-                'xooo-o', 'xoo-oo', 'xo-ooo', 
-                'xooo--', 
-                '-o-o-o-', 'xo-o-ox', 'xo-o-o-', 
-                '--o-o--', 'x-o-o--', 'x-o-o-x', 
-                '--oo--', 'x-oo--', 
-                '--o--', 
-
-                '-oooo', 'o-ooo', 'oo-oo', 
-
             ]
             '''
             feature_patterns = [
@@ -113,13 +95,13 @@ class Board(object):
             self.win = (who == 1)
 
 
-        if who == 0:
+        if who == 0: # 撤回上一步
             self.whose_turn = 1 if self.whose_turn == 2 else 2
             self.num_steps -= 1
         else:
             self.whose_turn = 1 if who == 2 else 2
             self.num_steps += 1
-        pass
+        
 
     def print(self):
         for i in range(self.MAX_BOARD):
