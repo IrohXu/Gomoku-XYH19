@@ -4,14 +4,15 @@ import pisqpipe as pp
 from pisqpipe import DEBUG_EVAL, DEBUG
 from board_info_helper import check_win, Adjacent, generate_board_value_lists
 from CriticNetwork import CriticNetwork
-from Debug import logDebug, logTraceBack
+from Debug import logDebug, logTraceBack, DEBUG_LOGFILE
 from Board import Board
 import pickle
 import os
 
+DEBUG_LOGFILE = 'adpnnew_log'
 MAX_BOARD = 20
 WORK_FOLDER = r"F:\OneDrive\课件\人工智能\final\Gomoku-XYH19\dist/"
-CRITIC_NETWORK_SAVEPATH = WORK_FOLDER+'/critic_network_new'
+CRITIC_NETWORK_SAVEPATH = WORK_FOLDER+'/critic_network_nnew'
 
 
 
@@ -164,7 +165,8 @@ if __name__ == '__main__':
 
     def brain_end():
         try:
-            pickle.dump(main.critic_network.layers, open(CRITIC_NETWORK_SAVEPATH, 'wb'))
+            if main.TRAIN:
+                pickle.dump(main.critic_network.layers, open(CRITIC_NETWORK_SAVEPATH, 'wb'))
         except:
             logTraceBack()
             raise Exception('fuck')

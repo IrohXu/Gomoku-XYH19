@@ -28,7 +28,7 @@ class PatternFinder():
 
                 p = p.childs[board_value]
 
-    def append_reverse_patterns(self, patterns):
+    def _append_reverse_patterns(self, patterns):
         pattern_tuples = []
         appended_patterns = []
         for pattern in patterns:
@@ -42,7 +42,7 @@ class PatternFinder():
                 raise Exception('Repetitive patterns: %s, %s'% (pattern, reversed_pattern))
         self.patterns += appended_patterns
         return pattern_tuples
-    def append_switch_side_patterns(self, patterns):
+    def _append_switch_side_patterns(self, patterns):
         switch_side_mapping = {'x':'o', 'o':'x', '-':'-'}
         for pattern in patterns:
             switch_side_pattern = list(pattern)
@@ -52,7 +52,7 @@ class PatternFinder():
             if switch_side_pattern not in patterns:
                 patterns.append(switch_side_pattern)
                 
-    def generate_pattern_encoding(self, pattern_tuples): # 合并对称等价的patterns
+    def _generate_pattern_encoding(self, pattern_tuples): # 合并对称等价的patterns
         result = {}
         for i, pattern_tuple in enumerate(pattern_tuples):
             for pattern in pattern_tuple:
@@ -61,6 +61,7 @@ class PatternFinder():
         #return {patterns[i]: i for i in range(len(patterns)) }
 
     def get_encoding(self, pattern):
+        '''获得某个pattern到feature的list的索引'''
         return self.pattern_encoding[pattern]
 
     def get_pattern_count(self, pattern, count_list):

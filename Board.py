@@ -52,16 +52,18 @@ class Board(object):
             '''
             feature_patterns = [
                 '-oooo-',
-                'x-ooo-x','x-ooo--','--ooo--','--ooo-o','o-ooo-o','x-ooo-o'
+                'x-ooo-x','x-ooo--','--ooo--','--ooo-o','o-ooo-o','x-ooo-o',
                 '--oo--','x-oo--',
                 'xoo-o--','xo-oo--','xo-oo-x','xoo-o-x',
-                'xooo--',
+                'xooo--', 'xoo---',
                 'xoooo-',
                 '-oo-o-',
-                'xooo-o-','xoo-oo-','xooo-ox','xoo-oox','xo-ooox','xooo-oo'
-                '-o-o-o-','xo-o-ox','xo-o-o-'
+                'xooo-o-','xoo-oo-','xooo-ox','xoo-oox','xooo-oo',
+                '-o-o-o-','xo-o-ox','xo-o-o-',
                 '--o-o--','x-o-o--','x-o-o-x',
                 '--o--',
+
+                '-oooo', 'o-ooo', 'oo-oo', 
             ]
             
             self.pattern_finder = PatternFinder(feature_patterns)

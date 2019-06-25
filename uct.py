@@ -93,7 +93,7 @@ class UCT(object):
         self.root = Node(action=(None, None), parent=None, board=board)
         self.eval_function = eval_function
         self.MAX_DEPTH = 4
-        self.DECAY = 0.9
+        self.DECAY = 0.99
 
     def reset(self):
         self.root = Node(action=(None, None), parent=None, board=board)
@@ -123,7 +123,7 @@ class UCT(object):
         '''
         for depth in range(self.MAX_DEPTH):
             if v.is_terminal():
-                return (1.0*(self.DECAY**depth) if v.board.win else 0.0)
+                break
 
             action_selected = None
             
@@ -151,12 +151,16 @@ class UCT(object):
                 action_selected = random.choice( v.get_successors() )
             v = Node(action_selected, v)
         
-        if test:
-            v.board.print()
-            print(self.eval_function(v.board))
+
+        if v.is_terminal():
+            Q = 1.0 if v.board.win else 0.0
+        else:
+            Q = self.eval_function(v.board)
+
+        Q = 0.5 + (Q-0.5)*self.DECAY**depth
         
 
-        return self.eval_function(v.board)*(self.DECAY**depth)
+        return Q
 
     def back_propagate(self, v, reward):
         while v is not None:
@@ -196,7 +200,7 @@ class UCT(object):
 
 def test():
 
-    board.load('history4.txt', whose_turn=2)
+    board.load('history5.txt', whose_turn=2)
 
     #board[7][9] = 1
     #board[11][12] = 2
@@ -209,8 +213,12 @@ def test():
     print(uct.root.children_expanded[action].Q)
     print(uct.root.children_expanded[action].N)
     
-    print(uct.root.children_expanded[((9, 10), 1)].Q)
-    print(uct.root.children_expanded[((9, 10), 1)].N)
+    print(uct.root.children_expanded[((12, 8), 1)].Q)
+    print(uct.root.children_expanded[((12, 8), 1)].N)
+    '''
+    print(uct.root.children_expanded[((10, 11), 1)].Q)
+    print(uct.root.children_expanded[((10, 11), 1)].N)
+    '''
     
     uct.forward(action)
     uct.root.board.print()
@@ -230,7 +238,7 @@ if __name__ == '__main__':
         MAX_BOARD = 20
         board = Board(MAX_BOARD)
 
-        CRITIC_NETWORK_SAVEPATH = RESOURCE_DIR + '/critic_network_new'
+        CRITIC_NETWORK_SAVEPATH = RESOURCE_DIR + '/critic_network_nnew'
         critic_network = CriticNetwork(params=[len(board.features)*5 + 2, 60, 1], pattern_finder=board.pattern_finder)
         if os.path.exists(CRITIC_NETWORK_SAVEPATH):
             critic_network.layers = pickle.load(open(CRITIC_NETWORK_SAVEPATH, 'rb'))
@@ -241,7 +249,7 @@ if __name__ == '__main__':
         
         uct = UCT(board, critic_network.forward)
 
-        #test()
+        test()
 
         def brain_init():
             if pp.width < 5 or pp.height < 5:
