@@ -103,18 +103,38 @@ class Board(object):
             self.num_steps += 1
         
 
-    def print(self):
+    def print(self, marks=[]):
         for i in range(self.MAX_BOARD):
             for j in range(self.MAX_BOARD):
+                if (i, j) in marks:
+                    sys.stdout.write('*')
+                    continue
                 if self.board[i][j] == 0:
                     sys.stdout.write('-')
                 elif self.board[i][j] == 1:
                     sys.stdout.write('o')
-                else:
+                elif self.board[i][j] == 2:
                     sys.stdout.write('x')
+                else:
+                    sys.stdout.write('*')
             sys.stdout.write('\n')
         sys.stdout.write('\n')
         sys.stdout.flush()
+    def __str__(self):
+        s = ''
+        for i in range(self.MAX_BOARD):
+            for j in range(self.MAX_BOARD):
+                if self.board[i][j] == 0:
+                    s += '-'
+                elif self.board[i][j] == 1:
+                    s += 'o'
+                elif self.board[i][j] == 2:
+                    s += 'x'
+                else:
+                    s += '*'
+            s += '\n'
+        s += '\n'
+        return s
 
     def load(self, filename, whose_turn):
         f = open(filename, 'r')

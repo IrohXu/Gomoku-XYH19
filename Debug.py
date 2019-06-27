@@ -1,4 +1,4 @@
-LOG_MODE = 'FILE'
+LOG_MODE = 'FUCK'
 
 # define a file for logging ...
 WORK_FOLDER = r"F:\OneDrive\课件\人工智能\final\Gomoku-XYH19\log/"

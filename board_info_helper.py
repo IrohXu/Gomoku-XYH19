@@ -242,16 +242,16 @@ def count_live_four_op(board,who):
     
     return count
 
-def count_live_two_op(self, who):
+def count_live_two_op(board, who):
     '''
     It is the  function that count all sorts of live two, eg. '--xx--',...
     '''
     if who == 1:
-        count = self.board.pattern_finder.get_pattern_count('--xx--', self.board.features) + self.board.pattern_finder.get_pattern_count('o-xx--', self.board.features
-        ) + self.board.pattern_finder.get_pattern_count('--x-x--', self.board.features) + self.board.pattern_finder.get_pattern_count('o-x-x--', self.board.features) 
+        count = board.pattern_finder.get_pattern_count('--xx--', board.features) + board.pattern_finder.get_pattern_count('o-xx--', board.features
+        ) + board.pattern_finder.get_pattern_count('--x-x--', board.features) + board.pattern_finder.get_pattern_count('o-x-x--', board.features) 
     else:
-        count = self.board.pattern_finder.get_pattern_count('--oo--', self.board.features) + self.board.pattern_finder.get_pattern_count('x-oo--', self.board.features
-        ) + self.board.pattern_finder.get_pattern_count('--o-o--', self.board.features) + self.board.pattern_finder.get_pattern_count('x-o-o--', self.board.features) 
+        count = board.pattern_finder.get_pattern_count('--oo--', board.features) + board.pattern_finder.get_pattern_count('x-oo--', board.features
+        ) + board.pattern_finder.get_pattern_count('--o-o--', board.features) + board.pattern_finder.get_pattern_count('x-o-o--', board.features) 
 
     return count
 
@@ -287,7 +287,7 @@ def heuristic_my(board, who):
         # 10000 1
         heuristic += (board.pattern_finder.get_pattern_count('-xxxx-', board.features)) * 10000
         # 1000 5
-        heuristic += (board.pattern_finder.get_pattern_count('--xxx--', board.features) + board.pattern_finder.get_pattern_count('oxxxxx-', board.features) + board.pattern_finder.get_pattern_count('x-xxx-x', board.features) + board.pattern_finder.get_pattern_count('--xxx-x', board.features) + board.pattern_finder.get_pattern_count('o-xxx-x', board.features)) * 1000
+        heuristic += (board.pattern_finder.get_pattern_count('--xxx--', board.features) + board.pattern_finder.get_pattern_count('oxxxx-', board.features) + board.pattern_finder.get_pattern_count('x-xxx-x', board.features) + board.pattern_finder.get_pattern_count('--xxx-x', board.features) + board.pattern_finder.get_pattern_count('o-xxx-x', board.features)) * 1000
         # 1000 * factor 5
         heuristic += (board.pattern_finder.get_pattern_count('o-xxx--', board.features) + board.pattern_finder.get_pattern_count('-xx-x-', board.features) + board.pattern_finder.get_pattern_count('oxxx-x-', board.features) + board.pattern_finder.get_pattern_count('oxx-xx-', board.features) + board.pattern_finder.get_pattern_count('oxxx-xx', board.features)) * 1000 * factor
         # 1000 * factor * factor 3
