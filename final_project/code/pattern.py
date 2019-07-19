@@ -1,0 +1,12 @@
+'-oooo-',
+'x-ooo-x','x-ooo--','--ooo--','--ooo-o','o-ooo-o','x-ooo-o'
+'--oo--','x-oo--',
+'xoo-o--','xo-oo--','xo-oo-x','xoo-o-x',
+'xooo--',
+'xoooo-',
+'-oo-o-',
+'xooo-o-','xoo-oo-','xooo-ox','xoo-oox','xooo-oo'
+'-o-o-o-','xo-o-ox','xo-o-o-'
+'--o-o--','x-o-o--','x-o-o-x',
+'--o--',
+'xoo---'
