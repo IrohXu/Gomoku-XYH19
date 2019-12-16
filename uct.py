@@ -17,6 +17,7 @@ import pickle
 import os
 from Resource import RESOURCE_DIR
 from board_info_helper import *
+import random
 
 START_TIME = time.time()
 TIME_LIMIT = 90
@@ -36,6 +37,75 @@ else:
 
 EVAL_FUNCTION = critic_network.forward
 
+PB_FACTOR = 0.9
+PB_MY_HEURISTICS_DICT ={
+'-oooo-': 10000,
+'x-ooo-x': 1000*PB_FACTOR**3,
+'x-ooo--': 1000*PB_FACTOR**1,
+'--ooo--': 1000,
+'--ooo-o': 1000,
+'o-ooo-o': 10000,
+'x-ooo-o': 1000*PB_FACTOR**1,
+'--oo--': 100,
+'x-oo--': 100*PB_FACTOR**1,
+'xoo-o--': 100*PB_FACTOR**2,
+'xo-oo--': 100*PB_FACTOR**2,
+'xo-oo-x': 100*PB_FACTOR**3,
+'xoo-o-x': 100*PB_FACTOR**3,
+'xooo--':  100,
+'xoo---': 1,
+'xoooo-': 1000,
+'-oo-o-': 1000*PB_FACTOR**1,
+'xooo-o-': 1000*PB_FACTOR**1,
+'xoo-oo-': 1000*PB_FACTOR**1,
+'xooo-ox': 1000*PB_FACTOR**3,
+'xoo-oox': 1000*PB_FACTOR**3,
+'xooo-oo': 1000*PB_FACTOR**1,
+'-o-o-o-': 1000*PB_FACTOR**2,
+'xo-o-ox': 1000*PB_FACTOR**6,
+'xo-o-o-': 1000*PB_FACTOR**4,
+'--o-o--': 100*PB_FACTOR**2,
+'x-o-o--': 100*PB_FACTOR**4,
+'x-o-o-x': 100*PB_FACTOR**6,
+'--o--': 1,
+}
+PB_OPPO_HEURISTICS_DICT = {
+'-xxxx-': -10000,
+'o-xxx-o': -1000*PB_FACTOR**3,
+'o-xxx--': -1000*PB_FACTOR**1,
+'--xxx--': -1000,
+'--xxx-x': -1000,
+'x-xxx-x': -10000,
+'o-xxx-x': -1000*PB_FACTOR**1,
+'--xx--': -100,
+'o-xx--': -100*PB_FACTOR**1,
+'oxx-x--': -100*PB_FACTOR**2,
+'ox-xx--': -100*PB_FACTOR**2,
+'ox-xx-o': -100*PB_FACTOR**3,
+'oxx-x-o': -100*PB_FACTOR**3,
+'oxxx--':  -100,
+'oxx---': -1,
+'oxxxx-': -1000,
+'-xx-x-': -1000*PB_FACTOR**1,
+'oxxx-x-': -1000*PB_FACTOR**1,
+'oxx-xx-': -1000*PB_FACTOR**1,
+'oxxx-xo': -1000*PB_FACTOR**3,
+'oxx-xxo': -1000*PB_FACTOR**3,
+'oxxx-xx': -1000*PB_FACTOR**1,
+'-x-x-x-': -1000*PB_FACTOR**2,
+'ox-x-xo': -1000*PB_FACTOR**6,
+'ox-x-x-': -1000*PB_FACTOR**4,
+'--x-x--': -100*PB_FACTOR**2,
+'o-x-x--': -100*PB_FACTOR**4,
+'o-x-x-o': -100*PB_FACTOR**6,
+'--x--': -1,
+}
+PB_INDEX_DICT = {}
+for pattern in PB_MY_HEURISTICS_DICT:
+    PB_INDEX_DICT[pattern] = board.pattern_finder.get_encoding(pattern)
+for pattern in PB_OPPO_HEURISTICS_DICT:
+    PB_INDEX_DICT[pattern] = board.pattern_finder.get_encoding(pattern)
+
 class Node():
     def __init__(self, action, parent, board=None):
         where, who = action
@@ -48,6 +118,8 @@ class Node():
         self.N = 0.0
         self.Q = 0.0
         self.eval_function = EVAL_FUNCTION
+
+        self.__pb_value = None
         
         if parent is not None:
             new_board = parent.board.deepcopy()
@@ -68,16 +140,36 @@ class Node():
 
     def uct_value(self):
         '''UCT价值公式'''
-        return self.Q/self.N + 1.0*math.sqrt(2*math.log(self.parent.N)/self.N) # 对自己的simulation有信心的话就把探索系数设小一点
+        return self.Q/self.N + 1.414*math.sqrt(2*math.log(self.parent.N)/self.N) # 对自己的simulation有信心的话就把探索系数设小一点
     
     def win_rate(self):
         return self.Q/self.N
+        
+    def pb_value(self):
+        if self.__pb_value is None:
+            if self.board.win is not None:
+                self.__pb_value = 1 if self.board.win == self.who() else -1
+            else:
+                result = 0
+                for pattern in PB_MY_HEURISTICS_DICT:
+                    result += (self.board.features[PB_INDEX_DICT[pattern]] - self.parent.board.features[PB_INDEX_DICT[pattern]]) * PB_MY_HEURISTICS_DICT[pattern]
+                for pattern in PB_OPPO_HEURISTICS_DICT:
+                    result += (self.board.features[PB_INDEX_DICT[pattern]] - self.parent.board.features[PB_INDEX_DICT[pattern]]) * PB_OPPO_HEURISTICS_DICT[pattern] * 5
+                if self.who() == 2:
+                    result = -result
+                self.__pb_value = result / 100000
+        return self.__pb_value
 
-    def best_successor_to_explore(self):
+    def best_successor_to_explore(self, progressive_bias=False):
         '''根据UCT的价值公式选出最有价值的子节点'''
+        if progressive_bias:
+            key_func = lambda item: item[1].uct_value() + item[1].pb_value()
+        else:
+            key_func = lambda item: item[1].uct_value()
+
         action, node = max(
                                 ( item for item in list(self.children_expanded.items()) ), 
-                                key=lambda item: item[1].uct_value() # action=item[0], node=item[1]
+                                key=key_func # action=item[0], node=item[1]
                             )
         return node
     
@@ -107,9 +199,9 @@ class Node():
             if self.board.win is None:
                 assert self.board.whose_turn != self.who()
                 adjacents = self.get_adjacents()
-                #pruned_adjacents = list(adjacents)
-                pruned_adjacents = self.heuristic_pruning(list(adjacents))
-                pruned_adjacents = self.eval_function_pruning(pruned_adjacents)
+                pruned_adjacents = list(adjacents)
+                #pruned_adjacents = self.heuristic_pruning(list(adjacents))
+                #pruned_adjacents = self.eval_function_pruning(pruned_adjacents)
                 self.successors = list(map(lambda where:(where, self.board.whose_turn), pruned_adjacents))
             else:
                 self.successors = []
@@ -212,8 +304,10 @@ class UCT(object):
         self.initial_board = board
         self.root = Node(action=(None, None), parent=None, board=board)
         self.eval_function = eval_function
-        self.MAX_DEPTH = 5
-        self.DECAY = 0.95
+        self.MAX_DEPTH = 0
+        self.DECAY = 1.0
+        self.SHUFFLE = False
+        self.PB = False
 
     def reset(self):
         self.root = Node(action=(None, None), parent=None, board=board)
@@ -224,10 +318,13 @@ class UCT(object):
             if v.is_expandable():
                 return self.expand(v)
             else:
-                v = v.best_successor_to_explore()
+                v = v.best_successor_to_explore(self.PB)
         return v
     
     def expand(self, v):
+        successors = v.get_successors()
+        if self.SHUFFLE:
+            successors = random.shuffle(successors)
         for action in v.get_successors():
             if action not in v.children_expanded: 
                 node = Node(action, parent=v)
@@ -243,6 +340,7 @@ class UCT(object):
             v.board.print()
             print(v.get_successors())
         '''
+        depth = 0
         for depth in range(self.MAX_DEPTH):
             if v.is_terminal():
                 break
@@ -256,7 +354,7 @@ class UCT(object):
                 where = action[0]
                 board_copy = v.board.deepcopy()
                 board_copy[where[0]][where[1]] = v.board.whose_turn # 之前这边写错了
-                value = self.eval_function(board_copy)
+                value = critic_network.forward(board_copy)
                 action_value_list.append((action, value))
             
             if v.board.whose_turn == 1:
@@ -274,10 +372,12 @@ class UCT(object):
                 action_selected = random.choice( v.get_successors() )
 
             v = Node(action_selected, v)
-        
 
         if v.is_terminal():
-            Q = 1.0 if v.board.win else 0.0
+            if v.board.win is None: # 下满了棋盘还没分出胜负
+                Q = 0.5
+            else:
+                Q = 1.0 if v.board.win else 0.0
 
         else:
             Q = self.eval_function(v.board)
@@ -348,10 +448,11 @@ class UCT(object):
                 self.root = self.root.children_expanded[action]
 
         elif who == 1 and action not in self.root.children_expanded: # 对手先手，我下第二步会有这种情况
-            
             self.root = Node(action, self.root)
         else:
             self.root = self.root.children_expanded[action]
+
+        self.root.parent = None
 
         
 

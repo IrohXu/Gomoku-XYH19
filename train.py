@@ -51,7 +51,7 @@ for i in range(2000):
             action, value = action_network_me.forward(board, actions, values)
             board_now = deepcopy(board)
             board[action[0]][action[1]] = ME # pp.do_mymove here
-            reward = 1.0 if (board.win is not None and board.win) else 0.0
+            reward = 0.0
             critic_network.back_propagation(board_now, board, reward)
         else:
             print('OPPONENT\'S TURN:')

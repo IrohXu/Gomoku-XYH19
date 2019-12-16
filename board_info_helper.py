@@ -1,4 +1,5 @@
 import random
+import itertools
 MAX_BOARD = 20
 
 def generate_board_value_lists(board, x, y, who):
@@ -111,21 +112,25 @@ def isCrossing(x, y):
 
 def Adjacent(board, shuffle=True):
     """It is a function for choosing the adjacent free point of full point in the board"""   
+    
     adjacent = []
     for x in range(MAX_BOARD):
         for y in range(MAX_BOARD):
             if board[x][y] == 0:
                 tag = 0
-                for i in range(-1, 2, 1):
-                    for j in range(-1, 2, 1):
-                        if isCrossing(x+i,y+j):
+                for x_direction, y_direction in [(-1, -1), (0, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (0, 1), (1, 1)]:
+                    for step in [1, 2]:
+                        _x = x + x_direction*step
+                        _y = y + y_direction*step
+                        if isCrossing(_x,_y):
                             continue
-                        if board[x+i][y+j] == 0:
+                        if board[_x][_y] == 0:
                             continue
                         else:
                             tag = 1
                 if tag == 1:
-                    adjacent.append((x,y))
+                    adjacent.append((x, y))
+
     if len(adjacent) == 0:
         adjacent.append( (int(MAX_BOARD/2), int(MAX_BOARD/2)) )  
     if shuffle: 
@@ -134,12 +139,15 @@ def Adjacent(board, shuffle=True):
 
 def Adjacent4Point(board, point):
     adjacent = set()
-    for x in range(point[0]-1, point[0]+2):
-        for y in range(point[1]-1, point[1]+2):
+    for x_direction, y_direction in [(-1, -1), (0, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (0, 1), (1, 1)]:
+        for step in [1, 2]:
+            x = point[0] + x_direction*step
+            y = point[1] + y_direction*step
             if isCrossing(x,y) or (x, y)==point:
                 continue
             if board[x][y] == 0:
                 adjacent.add( (x, y) )
+            
     return adjacent
 
 ##############################################################

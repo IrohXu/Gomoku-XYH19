@@ -87,7 +87,7 @@ class Board(object):
         old_features = self.pattern_finder.find(old_board_value_lists)
         new_features = self.pattern_finder.find(new_board_value_lists)
 
-        for i in range(len(self.features)):
+        for i in range(len(self.pattern_finder.pattern_encoding)):
             self.features[i] += new_features[i] - old_features[i]
         
 
